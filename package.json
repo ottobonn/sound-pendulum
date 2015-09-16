@@ -1,0 +1,17 @@
+{
+  "name": "sound-pendulum",
+  "version": "1.0.0",
+  "description": "The bluetooth central client for monitoring an accelerometer-enabled pendulum. As the pendulum moves, the client makes noise in response.",
+  "main": "sound.js",
+  "dependencies": {
+    "noble": "^1.1.0",
+    "node-pico": "^2.0.0",
+    "speaker": "^0.2.5"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "test"
+  },
+  "author": "Travis Geis",
+  "license": "MIT"
+}
