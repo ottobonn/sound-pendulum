@@ -134,16 +134,13 @@ void loop() {
   Serial.print("Z: \t"); Serial.print(event.acceleration.z); Serial.print("\t");
   Serial.println("m/s^2 ");
   #endif
+
+  // Find the total magnitude of acceleration in X and Y
+  float total = sqrt(pow(event.acceleration.x, 2) + pow(event.acceleration.y, 2));
   
   // Send results over bluetooth.
   ble.print("AT+BLEUARTTX=");
-  ble.print("X");
-  ble.print(event.acceleration.x);
-  ble.print("Y");
-  ble.print(event.acceleration.y);
-  //ble.print("Z");
-  //ble.print(event.acceleration.z);
-  ble.println(";");
+  ble.println(total);
 
   // check response status
   while (!ble.waitForOK());

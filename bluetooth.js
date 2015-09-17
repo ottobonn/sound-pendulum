@@ -57,25 +57,22 @@ noble.on('discover', function peripheralDiscovered(peripheral){
         var dataService = services[0];
         dataService.discoverCharacteristics([bluefruitDataServiceTxUUID], function(err, characteristics) {
           if (err) throw err;
-          characteristics.forEach(function(characteristic) {
-            setInterval(function() {
-              characteristic.read(function(err, data) {
-                if (err) throw err;
-                console.log('Data from serial: ' + data);
-              });
-            }, 100);
-            console.log('Discovered characteristic: ' + characteristic);
-            characteristic.notify(true, function(err) {
-              if (err) throw err;
-              console.log('Successfully subscribed to Bluefruit serial notifications.');
-            });
+          txCharacteristic = characteristics[0];
+          console.log('Discovered transmit characteristic: ' + txCharacteristic);
+          txCharacteristic.on('data', dataListener);
+          txCharacteristic.notify(true, function(err) {
+            if (err) throw err;
+            console.log('Successfully subscribed to Bluefruit serial notifications.');
           });
         });
-
       });
     });
   }
 });
+
+function dataListener(data, isNotification){
+  console.log((isNotification ? 'N:' : ' ') + data);
+}
 
 function handleError(e){
   console.log('Error: ');
