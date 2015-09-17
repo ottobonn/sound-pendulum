@@ -1,10 +1,11 @@
 var noble = require('noble');
+var util = require('util');
 
 /*
   The UUID of the specific Bluefruit LE Micro on the pendulum.
   TODO move this to the config file.
 */
-var pendulumBluefruitUUID = '0';
+var pendulumBluefruitUUID = 'f1ce13bbdaa7';
 
 /*
   The noble peripheral object for the connected pendulum.
@@ -17,16 +18,16 @@ var connectedPendulum = {};
   https://learn.adafruit.com/introducing-the-adafruit-bluefruit-le-uart-friend/uart-service
   for more info.
 */
-var bluefruitDataServiceUUID = '6E400001-B5A3-F393-­E0A9-­E50E24DCCA9E';
+var bluefruitDataServiceUUID = '6e400001b5a3f393e0a9e50e24dcca9e';
 
 /*
   The trasmit (peripheral to central) characteristic of the data service.
 */
-var bluefruitDataServiceTxUUID = '0x002';
+var bluefruitDataServiceTxUUID = '6e400003b5a3f393e0a9e50e24dcca9e';
 
 noble.on('stateChange', function(state) {
   if (state === 'poweredOn') {
-    noble.startScanning([bluefruitDataServiceUUID], false, handleError);
+    noble.startScanning([bluefruitDataServiceUUID]);
     console.log('Scanning for BLE devices with service UUID ' + bluefruitDataServiceUUID);
   } else {
     noble.stopScanning();
@@ -41,7 +42,6 @@ noble.on('stateChange', function(state) {
 */
 noble.on('discover', function peripheralDiscovered(peripheral){
   console.log('Peripheral discovered: ');
-  console.log(peripheral);
   var name = peripheral.advertisement.localName;
   var uuid = peripheral.uuid;
   console.log(util.format('(%s @ %s)', name, uuid));
@@ -54,42 +54,41 @@ noble.on('discover', function peripheralDiscovered(peripheral){
       connectedPendulum = peripheral;
       peripheral.discoverServices([bluefruitDataServiceUUID], function(err, services) {
         if (err) throw err;
-        services.forEach(function(service) {
-          service.discoverCharacteristics([bluefruitDataServiceTxUUID], function(err, characteristics) {
-            console.log('  ' + service.uuid);
-            if (err) throw err;
-            characteristics.forEach(function(characteristic) {
-              setInterval(function() {
-                characteristic.read(function(err, data) {
-                  if (err) throw err;
-                  console.log('Data from serial: ' + data.toByteArray());
-                });
-              }, 1000);
-              console.log('    ' + characteristic.uuid + ' (Bluefruit Serial)');
-              console.log('Subscribing to Bluefruit serial characteristic...');
-              characteristic.notify(true, function(err) {
+        var dataService = services[0];
+        dataService.discoverCharacteristics([bluefruitDataServiceTxUUID], function(err, characteristics) {
+          if (err) throw err;
+          characteristics.forEach(function(characteristic) {
+            setInterval(function() {
+              characteristic.read(function(err, data) {
                 if (err) throw err;
-                console.log('Successfully subscribed to Bluefruit serial notifications.');
+                console.log('Data from serial: ' + data);
               });
+            }, 100);
+            console.log('Discovered characteristic: ' + characteristic);
+            characteristic.notify(true, function(err) {
+              if (err) throw err;
+              console.log('Successfully subscribed to Bluefruit serial notifications.');
             });
           });
         });
+
       });
     });
   }
 });
 
 function handleError(e){
+  console.log('Error: ');
   console.log(e);
 }
 
 var triedToExit = false;
 
 function exitHandler(options, err) {
-  if (connectedBean && !triedToExit) {
+  if (connectedPendulum && !triedToExit) {
     triedToExit = true;
-    console.log('Disconnecting from Bean...');
-    connectedBean.disconnect(function(err) {
+    console.log('Disconnecting from pendulum...');
+    connectedPendulum.disconnect(function(err) {
       console.log('Disconnected.');
       process.exit();
     });

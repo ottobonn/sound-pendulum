@@ -147,4 +147,10 @@ void loop() {
 
   // check response status
   while (!ble.waitForOK());
+
+  delay(500);
+}
+
+uint8_t convertToByte(float acceleration, int scale){
+  return uint8_t (acceleration / scale);
 }
