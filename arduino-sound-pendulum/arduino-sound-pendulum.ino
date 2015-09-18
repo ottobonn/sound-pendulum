@@ -143,7 +143,15 @@ void loop() {
   ble.println(total);
 
   // check response status
-  while (!ble.waitForOK());
+  unsigned long previousTime = millis();
+  int timeout = 100; //ms
+  while (!ble.waitForOK()){
+    if ((unsigned long)(millis() - previousTime) >= timeout) {
+      ble.end();
+      initialize_bluetooth();
+      break;
+    }
+  }
 
   delay(500);
 }
